@@ -1,6 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Text;
+using TMPro;
 using UnityEngine;
+using UnityEngine.Networking;
 
 public class GameManager : MonoBehaviour
 {
@@ -9,6 +12,14 @@ public class GameManager : MonoBehaviour
     
     [Header("References")]
     [SerializeField] private PlayerController m_playerController;
+    [SerializeField] private GameObject m_mainMenu;
+
+    [Header("UI")]
+    [SerializeField] private TextMeshProUGUI m_playerNameUI;
+    [SerializeField] private TextMeshProUGUI m_playerRankingUI;
+    [SerializeField] private GameObject m_waitingTextUI;
+
+    private Player m_player;
     private float m_score;
     private void Awake()
     {
@@ -25,22 +36,56 @@ public class GameManager : MonoBehaviour
     }
 
 
-    #region GETTTERS AND SETTERS
-    public PlayerController GetPlayerController()
+    //GAME CLIENT SIDE CODE ---------------------------------------------
+    public void UpdatePlayerMenuInformation()
     {
-        return m_playerController;
+        m_playerNameUI.text = m_player.name;
+        m_playerRankingUI.text = m_player.ranking.ToString();
     }
 
-    public void SetScore(float _score)
+    //SERVER SIDE CODE ---------------------------------------------
+    public void CreatePlayerInformation(string _name, string _ranking)
+    {       
+        m_player = new Player(_name, float.Parse(_ranking));
+    }
+    
+    public void SendMatchRequest(string _gameMode)
     {
-        m_score = _score;
+        StartCoroutine(SendPlayerRequestToServerCoroutine(_gameMode));
     }
 
-    public float GetScore()
+    IEnumerator SendPlayerRequestToServerCoroutine(string _gameMode)
     {
-        return m_score;
-    }
+       
 
-    #endregion
+        string jsonData = JsonUtility.ToJson(m_player, true);
+        byte[] postData = Encoding.UTF8.GetBytes(jsonData);
+
+        Debug.Log(jsonData);
+
+        string serverUrl = "http://localhost:3000"; // Ruta para enviar datos al servidor
+
+        UnityWebRequest request = new UnityWebRequest(serverUrl + $"/{_gameMode}", "POST");
+        UploadHandlerRaw uploadHandler = new UploadHandlerRaw(postData);
+        uploadHandler.contentType = "application/json";
+        request.uploadHandler = uploadHandler;
+        request.downloadHandler = new DownloadHandlerBuffer();
+
+       
+
+        yield return request.SendWebRequest();
+
+        if (request.result == UnityWebRequest.Result.Success)
+        {
+            Debug.Log("Datos enviados al servidor correctamente");
+
+            // Procesar la respuesta del servidor
+            //ProcesarRespuestaDelServidor(request.downloadHandler.text);
+        }
+        else
+        {
+            Debug.LogError("Error al enviar datos al servidor: " + request.error);
+        }
+    }
 
 }
