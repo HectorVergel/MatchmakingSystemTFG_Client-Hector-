@@ -1,91 +1,118 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Text;
-using TMPro;
+using Mono.Cecil;
+using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.Networking;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
-
-    public static GameManager m_instance;
+    public static GameManager instance;
+    private MenuManager m_MenuManager;
     
-    [Header("References")]
-    [SerializeField] private PlayerController m_playerController;
-    [SerializeField] private GameObject m_mainMenu;
+    [Header("GameTable")] [SerializeField] private Transform m_StashedCardsTransform;
+    private List<Player> m_PlayersInGame = new List<Player>();
+    private Player m_SessionPlayer;
+    private Match m_MatchData;
 
-    [Header("UI")]
-    [SerializeField] private TextMeshProUGUI m_playerNameUI;
-    [SerializeField] private TextMeshProUGUI m_playerRankingUI;
-    [SerializeField] private GameObject m_waitingTextUI;
-
-    private Player m_player;
-    private float m_score;
+    private GameObject m_PlayersHolder;
     private void Awake()
     {
-        if (m_instance == null)
+        if (instance == null)
         {
-            m_instance = this;
+            instance = this;
         }
         else
         {
-            Destroy(m_instance);
+            Destroy(this);
         }
-
-        DontDestroyOnLoad(this.gameObject);
+        
+        m_MenuManager = FindObjectOfType<MenuManager>();
+        InitializePlayerInformation("None", 1200);
     }
 
-
-    //GAME CLIENT SIDE CODE ---------------------------------------------
-    public void UpdatePlayerMenuInformation()
+    private void Start()
     {
-        m_playerNameUI.text = m_player.name;
-        m_playerRankingUI.text = m_player.ranking.ToString();
+        CalculatePlayersInGame();
+       
     }
 
-    //SERVER SIDE CODE ---------------------------------------------
-    public void CreatePlayerInformation(string _name, string _ranking)
-    {       
-        m_player = new Player(_name, float.Parse(_ranking));
+    public int GetNumberOfPlayers()
+    {
+        return 4;
+        //return m_PlayersInGame.Count;
+    }
+
+    private void CalculatePlayersInGame()
+    {
+        if (m_MatchData == null) return;
+        for (int i = 0; i < m_MatchData.players.Length; i++)
+        {
+            AddPlayer(m_MatchData.players[i]);
+        }
+    }
+    public void AddPlayer(Player _player)
+    {
+        m_PlayersInGame.Add(_player);
+    }
+
+    public void InitializePlayerInformation(string _name, int _ranking)
+    {
+        m_SessionPlayer = new Player(_name, _ranking);
+        RefreshPlayerInformation();
+    }
+
+    public void RefreshPlayerInformation()
+    {
+        m_MenuManager?.RefreshPlayerInformation(m_SessionPlayer);
+    }
+
+    public Player GetPlayer()
+    {
+        return m_SessionPlayer;
+    }
+
+    public MenuManager GetMenuManager()
+    {
+        return m_MenuManager;
+    }
+
+    public void InitializeMatch(Match _match)
+    {
+        m_MatchData = _match;
+        LoadClientScene("Game_Scene");
+    }
+
+    private void LoadClientScene(string _name)
+    {
+        StartCoroutine(LoadSceneAsyncCoroutine(_name));
     }
     
-    public void SendMatchRequest(string _gameMode)
+    IEnumerator LoadSceneAsyncCoroutine(string _name)
     {
-        StartCoroutine(SendPlayerRequestToServerCoroutine(_gameMode));
+        AsyncOperation asyncOperation = SceneManager.LoadSceneAsync(_name);
+
+        while (!asyncOperation.isDone)
+        {
+            float progress = Mathf.Clamp01(asyncOperation.progress / 0.9f);
+            Debug.Log("Cargando escena: " + (progress * 100) + "%");
+
+            yield return null; // Esperamos un frame antes de continuar
+        }
+        InitializePlayersHUD();
+
     }
 
-    IEnumerator SendPlayerRequestToServerCoroutine(string _gameMode)
+    private void InitializePlayersHUD()
     {
-       
-
-        string jsonData = JsonUtility.ToJson(m_player, true);
-        byte[] postData = Encoding.UTF8.GetBytes(jsonData);
-
-        Debug.Log(jsonData);
-
-        string serverUrl = "http://localhost:3000"; // Ruta para enviar datos al servidor
-
-        UnityWebRequest request = new UnityWebRequest(serverUrl + $"/{_gameMode}", "POST");
-        UploadHandlerRaw uploadHandler = new UploadHandlerRaw(postData);
-        uploadHandler.contentType = "application/json";
-        request.uploadHandler = uploadHandler;
-        request.downloadHandler = new DownloadHandlerBuffer();
-
-       
-
-        yield return request.SendWebRequest();
-
-        if (request.result == UnityWebRequest.Result.Success)
+        m_PlayersHolder = GameObject.FindGameObjectWithTag("PLAYERS");
+        for (int i = 0; i < m_MatchData.players.Length; i++)
         {
-            Debug.Log("Datos enviados al servidor correctamente");
-
-            // Procesar la respuesta del servidor
-            //ProcesarRespuestaDelServidor(request.downloadHandler.text);
+            PlayerGameInfo l_PlayerInfo = m_PlayersHolder.transform.GetChild(i).GetComponent<PlayerGameInfo>();
+            l_PlayerInfo.Initialize(m_MatchData.players[i].name, m_MatchData.players[i].ranking);
+            l_PlayerInfo.gameObject.SetActive(true);
         }
-        else
-        {
-            Debug.LogError("Error al enviar datos al servidor: " + request.error);
-        }
+        
     }
-
 }
