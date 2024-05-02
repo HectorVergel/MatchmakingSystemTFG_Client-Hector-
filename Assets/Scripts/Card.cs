@@ -1,84 +1,78 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
 public class Card : MonoBehaviour
 {
-    private CARD_TYPE m_CardType;
-    private CARD_COLOR m_CardColor;
-    private int m_CardNumber;
-    [SerializeField] private Sprite m_CardBack;
-    
-     private SpriteRenderer m_Renderer;
-     [SerializeField]private Image m_Image;
-    
-    public void Initialize(CARD_TYPE _type, CARD_COLOR _color)
-    {
-        
-        m_CardType = _type;
-        m_CardColor = _color;
-        Sprite l_CardSprite;
-        if (_type == CARD_TYPE.NUMBER)
-        {
-            InitCardWithRandomNumber();
-            l_CardSprite = Load("UNO_Front", m_CardNumber.ToString() + "_" + m_CardColor.ToString());
-        }
-        else if (_type == CARD_TYPE.COLOR || _type == CARD_TYPE.SUM4)
-        {
-            l_CardSprite = Load("UNO_Front", m_CardType.ToString() + "_" + "1");
-        }
-        else
-        {
-            l_CardSprite = Load("UNO_Front", m_CardType.ToString()  + "_" + m_CardColor.ToString());
-        }
-       
-        m_Image.sprite = l_CardSprite;
+    public CardInfo m_CardInfo;
+    private SpriteRenderer m_Renderer;
 
+    [SerializeField] private Sprite m_CardBack;
+    [SerializeField] private RectTransform m_RectTransform;
+    [SerializeField] private Image m_Image;
+    [SerializeField] private float m_MoveSpeed = 10.0f;
+
+    public void Initialize(CardInfo _cardInfo)
+    {
+        m_CardInfo = _cardInfo;
+        m_Image.sprite = m_CardInfo.sprite;
     }
 
     public void PlayCard()
     {
-        
-    }
-
-    public void Flip()
-    {
-        m_Renderer.sprite = m_CardBack;
-    }
-
-    private void InitCardWithRandomNumber()
-    {
-        m_CardNumber = Random.Range(1, 10);
-    }
-    
-    
-    Sprite Load( string imageName, string spriteName)
-    {
-        Sprite[] all = Resources.LoadAll<Sprite>( imageName);
- 
-        foreach( var s in all)
+        //CHECK IF CAN PLAY CARD
+        if (CanPlayCardSelected())
         {
-            if (s.name == spriteName)
+            //MOVE TO PLAYED CARDS
+            transform.SetParent(GameManager.instance.GetPlayCardTransform());
+            StartCoroutine(MoveToPosition(Vector3.zero));
+            CardDealer.instance.SetLastCardPlayed(this);
+            if (m_CardInfo.effect)
             {
-                return s;
+                m_CardInfo.effect.DoEffect();
             }
         }
-        return null;
     }
+
+    private bool CanPlayCardSelected()
+    {
+        if (m_CardInfo.type == CARD_TYPE.SUM4 || m_CardInfo.type == CARD_TYPE.COLOR)
+        {
+            return true;
+        }
+
+        if (m_CardInfo.color == CardDealer.instance.GetLastCardPlayed().m_CardInfo.color || m_CardInfo.number == CardDealer.instance.GetLastCardPlayed().m_CardInfo.number)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    private IEnumerator MoveToPosition(Vector3 _target)
+    {
+        while (Vector2.Distance(m_RectTransform.anchoredPosition, _target) > 0.01f)
+        {
+            Vector2 newPosition = Vector2.Lerp(m_RectTransform.anchoredPosition, _target, Time.deltaTime * m_MoveSpeed);
+            m_RectTransform.anchoredPosition = newPosition;
+
+            yield return null;
+        }
+    }
+    
 }
 
 public enum CARD_TYPE
 {
-   NUMBER,
-   SWITCH,
-   BLOCK,
-   SUM2,
-   SUM4,
-   COLOR
-    
+    NUMBER,
+    SWITCH,
+    BLOCK,
+    SUM2,
+    SUM4,
+    COLOR
 }
 
 public enum CARD_COLOR
@@ -86,5 +80,6 @@ public enum CARD_COLOR
     RED,
     BLUE,
     YELLOW,
-    GREEN
+    GREEN,
+    NONE
 }

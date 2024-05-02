@@ -4,49 +4,91 @@ using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
 
-public class CardDealer : CardsHandlerBase
+public class CardDealer : MonoBehaviour
 {
-    [Header("Cards")] [SerializeField] private Card m_CardPrefab;
+    public static CardDealer instance;
+    
+    [Header("Cards")] 
+    [SerializeField] private Card m_CardPrefab;
     [SerializeField] private int m_MaxCardsPerPlayer = 7;
     [SerializeField] private float m_SecondsToStart = 2.0f;
+    [SerializeField] private float m_SecondsBetweenCards = 0.1f;
 
     [Header("References")] [SerializeField]
     private List<Transform> m_PlayersHandsTransforms = new List<Transform>();
-
     [SerializeField] private Transform m_PlayerHand;
- 
+
+    private Transform m_PlayedCards;
     private int m_PlayersNum;
+
+    private Card m_LastCardPlayed;
+
+    private void Awake()
+    {
+        if (instance == null)
+        {
+            instance = this;
+        }
+        else
+        {
+            Destroy(this);
+        }
+    }
 
     private void Start()
     {
+        m_PlayedCards = GameManager.instance.GetPlayCardTransform();
         m_PlayersNum = GameManager.instance.GetNumberOfPlayers();
+        GiveCardToCurrentPlayer();
+        InstantiateCard(m_PlayedCards.gameObject.transform, true);
+    }
+
+    public void GiveCardToCurrentPlayer()
+    {
         StartCoroutine(GiveCards());
     }
 
+    public void StealCard()
+    {
+        InstantiateCard(m_PlayerHand);
+    }
     private IEnumerator GiveCards()
     {
         yield return new WaitForSeconds(m_SecondsToStart);
 
         for (int j = 0; j < m_MaxCardsPerPlayer; j++)
         {
-            Card l_Card = Instantiate(m_CardPrefab, m_PlayerHand);
-            l_Card.Initialize(GetRandomEnum<CARD_TYPE>(), GetRandomEnum<CARD_COLOR>());
-            yield return new WaitForSeconds(0.5f);
+            InstantiateCard(m_PlayerHand);
+            yield return new WaitForSeconds(m_SecondsBetweenCards);
         }
     }
 
-
-    private T GetRandomEnum<T>()
+    private void InstantiateCard(Transform _parent, bool _isLastCard = false)
     {
-        if (!typeof(T).IsEnum)
+        Card l_Card = Instantiate(m_CardPrefab, _parent);
+        l_Card.Initialize(CardDeck.instance.GetAvailiableCard(_isLastCard));
+        l_Card.m_CardInfo.isOnDeck = false;
+
+        if (_isLastCard)
         {
-            throw new ArgumentException("Type parameter T must be an enum type.");
+            SetLastCardPlayed(l_Card);
         }
 
-        Array enumValues = Enum.GetValues(typeof(T));
+    }
+    
+    public void SetLastCardPlayed(Card _card)
+    {
+        if (m_LastCardPlayed != null)
+        {
+            m_LastCardPlayed.m_CardInfo.isOnDeck = true;
+            Destroy(m_LastCardPlayed.gameObject, 1f);
 
-        int randomIndex = UnityEngine.Random.Range(0, enumValues.Length);
+        }
+        m_LastCardPlayed = _card;
+    }
 
-        return (T)enumValues.GetValue(randomIndex);
+    public Card GetLastCardPlayed()
+    {
+        return m_LastCardPlayed;
     }
 }

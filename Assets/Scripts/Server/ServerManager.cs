@@ -19,6 +19,7 @@ public class ServerManager : MonoBehaviour
     private float m_Timer = 0.0f;
     private bool m_SearchingMatch = false;
     private string m_CurrentGameMode;
+
     private void Awake()
     {
         if (m_instance == null)
@@ -35,31 +36,31 @@ public class ServerManager : MonoBehaviour
 
     private void Update()
     {
-        // if (Input.GetKeyDown(KeyCode.S))
-        // {
-        //     TryToStartMatch();
-        // }
-         
-        if (!m_SearchingMatch) return;
-         m_Timer += Time.deltaTime;
-         if (m_Timer >= m_TimeToUpdate)
-         {
-             TryToStartMatch();
-             m_Timer = 0.0f;
-         }
+        if (m_SearchingMatch)
+        {
+            m_Timer += Time.deltaTime;
+            if (m_Timer >= m_TimeToUpdate)
+            {
+                TryToStartMatch();
+                m_Timer = 0.0f;
+            }
+        }
     }
 
     //SERVER SIDE CODE ---------------------------------------------
-        //MATCH --------------------
+    //MATCH --------------------
     public void SendMatchRequest(string _gameMode)
     {
+        m_SearchingMatch = true;
         StartCoroutine(POSTFindMatch(_gameMode));
     }
 
     public void LeaveQueueRequest(string _gameMode)
     {
+        m_SearchingMatch = false;
         StartCoroutine(DELETEPlayerFromQueue(_gameMode));
     }
+
     IEnumerator POSTFindMatch(string _gameMode)
     {
         m_CurrentGameMode = _gameMode;
@@ -69,24 +70,21 @@ public class ServerManager : MonoBehaviour
 
         Debug.Log(l_jsonData);
 
-        string l_serverUrl = "http://localhost:3000"; 
+        string l_serverUrl = "http://localhost:3000";
 
         UnityWebRequest l_request = new UnityWebRequest(l_serverUrl + $"/find-match/{_gameMode}", "POST");
         UploadHandlerRaw l_uploadHandler = new UploadHandlerRaw(l_postData);
-        
+
         l_uploadHandler.contentType = "application/json";
         l_request.uploadHandler = l_uploadHandler;
         l_request.downloadHandler = new DownloadHandlerBuffer();
 
-       
 
         yield return l_request.SendWebRequest();
 
         if (l_request.result == UnityWebRequest.Result.Success)
         {
             Debug.Log("Datos enviados al servidor correctamente");
-            //GameManager.instance.GetMenuManager().ActivateWaitingUI();
-            m_SearchingMatch = true;
 
         }
         else
@@ -98,8 +96,7 @@ public class ServerManager : MonoBehaviour
     private void TryToStartMatch()
     {
         StartCoroutine(GETMatch(m_CurrentGameMode));
-        StartCoroutine(POSTMatchmaker());
-
+       
     }
 
     IEnumerator GETMatch(string _gameMode)
@@ -116,10 +113,10 @@ public class ServerManager : MonoBehaviour
             if (request.result == UnityWebRequest.Result.Success)
             {
                 // Procesar la respuesta
-              
+
                 Debug.Log("Datos recibidos del servidor correctamente");
                 string response = request.downloadHandler.text;
-                    Debug.Log("Respuesta del servidor: " + response);
+                Debug.Log("Respuesta del servidor: " + response);
                 // Puedes realizar aquí cualquier acción adicional con la respuesta recibida
                 ProcessServerRes(response);
             }
@@ -128,16 +125,14 @@ public class ServerManager : MonoBehaviour
                 Debug.LogError("Error al recibir datos del servidor: " + request.error);
             }
         }
-
-       
     }
-    
+
     IEnumerator POSTMatchmaker()
     {
-        string l_serverUrl = "http://localhost:3000"; 
+        string l_serverUrl = "http://localhost:3000";
 
         UnityWebRequest l_request = new UnityWebRequest(l_serverUrl + $"/matchmaker", "POST");
-        
+
         l_request.downloadHandler = new DownloadHandlerBuffer();
         yield return l_request.SendWebRequest();
 
@@ -146,7 +141,6 @@ public class ServerManager : MonoBehaviour
             Debug.Log("Datos enviados al servidor correctamente");
             //GameManager.instance.GetMenuManager().ActivateWaitingUI();
             m_SearchingMatch = true;
-
         }
         else
         {
@@ -172,10 +166,12 @@ public class ServerManager : MonoBehaviour
             }
             else
             {
-                Debug.LogError("Error al eliminar datos del servidor para el jugador " + playerName + ": " + request.error);
+                Debug.LogError("Error al eliminar datos del servidor para el jugador " + playerName + ": " +
+                               request.error);
             }
         }
     }
+
     private void ProcessServerRes(string _res)
     {
         Debug.Log("JSON antes de deserializar: " + _res.Trim('"'));
@@ -192,7 +188,5 @@ public class ServerManager : MonoBehaviour
         {
             Debug.LogError("Error durante la deserializaci�n: " + ex.Message);
         }
-        
-        
     }
 }

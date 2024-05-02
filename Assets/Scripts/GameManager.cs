@@ -11,7 +11,8 @@ public class GameManager : MonoBehaviour
     public static GameManager instance;
     private MenuManager m_MenuManager;
     
-    [Header("GameTable")] [SerializeField] private Transform m_StashedCardsTransform;
+    [Header("GameTable")] [SerializeField] private Transform m_PlayedCardsTransform;
+    [SerializeField] private CardStash m_CardStash;
     private List<Player> m_PlayersInGame = new List<Player>();
     private Player m_SessionPlayer;
     private Match m_MatchData;
@@ -76,6 +77,16 @@ public class GameManager : MonoBehaviour
     public MenuManager GetMenuManager()
     {
         return m_MenuManager;
+    }
+
+    public CardStash GetCardStash()
+    {
+        return m_CardStash;
+    }
+
+    public Transform GetPlayCardTransform()
+    {
+        return m_PlayedCardsTransform;
     }
 
     public void InitializeMatch(Match _match)

@@ -51,7 +51,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_CardBack: {fileID: 0}
+  m_RectTransform: {fileID: 7208044285785009384}
   m_Image: {fileID: 7208044286228747868}
+  m_MoveSpeed: 10
 --- !u!1 &7208044286034245366
 GameObject:
   m_ObjectHideFlags: 0
@@ -244,3 +246,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_HoverScale: 1.25
   m_PositionOffset: 25
+  m_Card: {fileID: 8172473008515921932}
