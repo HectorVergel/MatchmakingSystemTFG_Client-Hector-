@@ -95,6 +95,11 @@ public class GameManager : MonoBehaviour
         LoadClientScene("Game_Scene");
     }
 
+    public Match GetMatch()
+    {
+        return m_MatchData;
+    }
+
     private void LoadClientScene(string _name)
     {
         StartCoroutine(LoadSceneAsyncCoroutine(_name));

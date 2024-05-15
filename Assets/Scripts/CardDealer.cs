@@ -18,7 +18,7 @@ public class CardDealer : MonoBehaviour
     private List<Transform> m_PlayersHandsTransforms = new List<Transform>();
     [SerializeField] private Transform m_PlayerHand;
 
-    private Transform m_PlayedCards;
+    [SerializeField] private Transform m_PlayedCards;
     private int m_PlayersNum;
 
     private Card m_LastCardPlayed;
@@ -37,7 +37,6 @@ public class CardDealer : MonoBehaviour
 
     private void Start()
     {
-        m_PlayedCards = GameManager.instance.GetPlayCardTransform();
         m_PlayersNum = GameManager.instance.GetNumberOfPlayers();
         GiveCardToCurrentPlayer();
         InstantiateCard(m_PlayedCards.gameObject.transform, true);
@@ -74,6 +73,13 @@ public class CardDealer : MonoBehaviour
             SetLastCardPlayed(l_Card);
         }
 
+    }
+
+    public void PlayCard(CardInfo info)
+    {
+        Card l_Card = Instantiate(m_CardPrefab, m_PlayedCards.gameObject.transform);
+        l_Card.Initialize(info);
+        SetLastCardPlayed(l_Card);
     }
     
     public void SetLastCardPlayed(Card _card)

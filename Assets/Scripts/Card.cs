@@ -18,13 +18,21 @@ public class Card : MonoBehaviour
     public void Initialize(CardInfo _cardInfo)
     {
         m_CardInfo = _cardInfo;
-        m_Image.sprite = m_CardInfo.sprite;
+        if (m_CardInfo.sprite == null)
+        {
+            m_Image.sprite = CardDeck.instance.GetSpriteFromInfo(_cardInfo);
+        }
+        else
+        {
+            m_Image.sprite = m_CardInfo.sprite;
+        }
+      
     }
 
     public void PlayCard()
     {
         //CHECK IF CAN PLAY CARD
-        if (CanPlayCardSelected())
+        if (CanPlayCardSelected() && GameServer.instance.m_isMyTurn)
         {
             //MOVE TO PLAYED CARDS
             transform.SetParent(GameManager.instance.GetPlayCardTransform());
@@ -34,6 +42,7 @@ public class Card : MonoBehaviour
             {
                 m_CardInfo.effect.DoEffect();
             }
+            GameServer.instance.SendCardPlayed(m_CardInfo);
         }
     }
 

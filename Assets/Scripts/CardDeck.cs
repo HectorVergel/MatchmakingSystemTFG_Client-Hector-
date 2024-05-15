@@ -90,7 +90,7 @@ public class CardDeck : MonoBehaviour
         }
     }
 
-    private Sprite GetSpriteFromInfo(CardInfo _cardInfo)
+    public Sprite GetSpriteFromInfo(CardInfo _cardInfo)
     {
         Sprite l_CardSprite;
         if (_cardInfo.type == CARD_TYPE.NUMBER)

@@ -101,7 +101,7 @@ public class ServerManager : MonoBehaviour
 
     IEnumerator GETMatch(string _gameMode)
     {
-        string serverUrl = "http://localhost:3000"; // URL del servidor
+        string serverUrl = "http://localhost:4000"; // URL del servidor
         string requestUrl = $"{serverUrl}/match/{GameManager.instance.GetPlayer().name}";
 
         using (UnityWebRequest request = UnityWebRequest.Get(requestUrl))

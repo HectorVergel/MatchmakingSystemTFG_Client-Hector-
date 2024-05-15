@@ -1,6 +1,5 @@
 using UnityEngine;
 using System.Collections;
-using UnityEditorInternal;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 public class GUI_Card : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
