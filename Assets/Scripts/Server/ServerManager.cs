@@ -126,27 +126,7 @@ public class ServerManager : MonoBehaviour
             }
         }
     }
-
-    IEnumerator POSTMatchmaker()
-    {
-        string l_serverUrl = "http://localhost:3000";
-
-        UnityWebRequest l_request = new UnityWebRequest(l_serverUrl + $"/matchmaker", "POST");
-
-        l_request.downloadHandler = new DownloadHandlerBuffer();
-        yield return l_request.SendWebRequest();
-
-        if (l_request.result == UnityWebRequest.Result.Success)
-        {
-            Debug.Log("Datos enviados al servidor correctamente");
-            //GameManager.instance.GetMenuManager().ActivateWaitingUI();
-            m_SearchingMatch = true;
-        }
-        else
-        {
-            Debug.LogError("Error al enviar datos al servidor: " + l_request.error);
-        }
-    }
+    
 
     IEnumerator DELETEPlayerFromQueue(string _gameMode)
     {

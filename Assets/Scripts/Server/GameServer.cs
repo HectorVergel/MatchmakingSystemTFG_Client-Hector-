@@ -15,7 +15,9 @@ public class GameServer : MonoBehaviour
     private CardInfo m_LastCardInfo;
     public bool m_isMyTurn;
     public GameObject m_TurnGUI;
-
+    private string m_LastPlayerName;
+    private bool m_UpdateCardsSubstract;
+    private bool m_UpdateCardsAdd;
     private void Awake()
     {
         ws = new WebSocket("ws://localhost:4000");
@@ -35,13 +37,24 @@ public class GameServer : MonoBehaviour
 
     private void Update()
     {
-        Debug.Log("CARD SUCCES " + m_CardSucces + " CARDINFO " + m_LastCardInfo);
         if (m_CardSucces && m_LastCardInfo != null)
         {
             CardDealer.instance.PlayCard(m_LastCardInfo);
             m_CardSucces = false;
         }
 
+        if (m_UpdateCardsSubstract)
+        {
+            GameManager.instance.UpdatePlayersCards(m_LastPlayerName, false);
+            m_UpdateCardsSubstract = false;
+        }
+        
+        if (m_UpdateCardsAdd)
+        {
+            GameManager.instance.UpdatePlayersCards(m_LastPlayerName, true);
+            m_UpdateCardsAdd = false;
+        }
+        
         m_TurnGUI.SetActive(!m_isMyTurn);
     }
 
@@ -52,7 +65,11 @@ public class GameServer : MonoBehaviour
         m_isMyTurn = false;
         m_TurnGUI.SetActive(true);
     }
-
+    
+    public void SendSteal()
+    {
+        ws.Send($"STEAL${GameManager.instance.GetPlayer().name}${GameManager.instance.GetMatch().id}$STEAL");
+    }
     private void OnConnectToWSS(object sender, EventArgs e)
     {
         ws.Send($"INFO${GameManager.instance.GetMatch().id}${GameManager.instance.GetPlayer().name}$extra");
@@ -76,9 +93,18 @@ public class GameServer : MonoBehaviour
 
             m_CardSucces = true;
         }
+        else if (e.Data.Contains("steal"))
+        {
+            m_UpdateCardsAdd = true;
+            m_LastPlayerName = e.Data.Split('_')[0];
+        }
         else
         {
+            Debug.Log("Nombre del jugador: " + e.Data);
             m_isMyTurn = true;
+            m_UpdateCardsSubstract = true;
+            m_LastPlayerName = e.Data;
+
         }
     }
 }

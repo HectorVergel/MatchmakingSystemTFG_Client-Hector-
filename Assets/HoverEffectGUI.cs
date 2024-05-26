@@ -22,7 +22,7 @@ public class HoverEffectGUI : MonoBehaviour, IPointerEnterHandler, IPointerExitH
 
         m_OriginalScale = m_RectTransform.localScale;
         m_OriginalPosition = m_RectTransform.localPosition;
-        m_MyLayout = GameObject.FindGameObjectWithTag("HAND").GetComponent<HorizontalLayoutGroup>();
+        m_MyLayout = GameObject.FindGameObjectWithTag("HAND")?.GetComponent<HorizontalLayoutGroup>();
         m_ParentCanvas = transform.parent.GetComponent<Canvas>();
     }
 

@@ -19,7 +19,6 @@ public class CardDealer : MonoBehaviour
     [SerializeField] private Transform m_PlayerHand;
 
     [SerializeField] private Transform m_PlayedCards;
-    private int m_PlayersNum;
 
     private Card m_LastCardPlayed;
 
@@ -37,7 +36,6 @@ public class CardDealer : MonoBehaviour
 
     private void Start()
     {
-        m_PlayersNum = GameManager.instance.GetNumberOfPlayers();
         GiveCardToCurrentPlayer();
         InstantiateCard(m_PlayedCards.gameObject.transform, true);
     }
@@ -50,6 +48,7 @@ public class CardDealer : MonoBehaviour
     public void StealCard()
     {
         InstantiateCard(m_PlayerHand);
+        GameServer.instance.SendSteal();
     }
     private IEnumerator GiveCards()
     {

@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -6,13 +7,22 @@ using TMPro;
 
 public class MenuManager : MonoBehaviour
 {
-    [SerializeField] Console m_Console;
+    [SerializeField] PlayerInfoHandler m_PlayerInfoHandler;
 
     [SerializeField] private TextMeshProUGUI m_PlayerName;
     [SerializeField] private TextMeshProUGUI m_Rank;
 
     [SerializeField] private GameObject m_WaitingUI;
     // Update is called once per frame
+    private void Start()
+    {
+        if (GameManager.instance.GetPlayer() != null)
+        {
+            m_PlayerInfoHandler?.SetNewRank(GameManager.instance.GetPlayer().ranking);
+        }
+        
+    }
+
     void Update()
     {
             ConsoleUpdate();
@@ -22,7 +32,7 @@ public class MenuManager : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.C))
         {
-            m_Console.gameObject.SetActive(!m_Console.gameObject.activeSelf);
+            m_PlayerInfoHandler.gameObject.SetActive(!m_PlayerInfoHandler.gameObject.activeSelf);
         }
     }
 

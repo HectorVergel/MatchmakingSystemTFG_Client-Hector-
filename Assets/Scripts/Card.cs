@@ -10,7 +10,6 @@ public class Card : MonoBehaviour
     public CardInfo m_CardInfo;
     private SpriteRenderer m_Renderer;
 
-    [SerializeField] private Sprite m_CardBack;
     [SerializeField] private RectTransform m_RectTransform;
     [SerializeField] private Image m_Image;
     [SerializeField] private float m_MoveSpeed = 10.0f;
@@ -42,7 +41,10 @@ public class Card : MonoBehaviour
             {
                 m_CardInfo.effect.DoEffect();
             }
+            GameManager.instance.UpdatePlayersCards(GameManager.instance.GetPlayer().name, false);
             GameServer.instance.SendCardPlayed(m_CardInfo);
+            
+            GameManager.instance.CheckIfMatchEnded();
         }
     }
 

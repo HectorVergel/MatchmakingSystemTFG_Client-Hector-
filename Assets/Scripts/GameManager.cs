@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Mono.Cecil;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -30,19 +31,18 @@ public class GameManager : MonoBehaviour
         }
         
         m_MenuManager = FindObjectOfType<MenuManager>();
-        InitializePlayerInformation("None", 1200);
+        if (m_SessionPlayer?.name != "default")
+        {
+            InitializePlayerInformation(m_SessionPlayer.name, m_SessionPlayer.ranking);
+            return;
+        }
+        InitializePlayerInformation("default", 0000);
     }
 
     private void Start()
     {
         CalculatePlayersInGame();
        
-    }
-
-    public int GetNumberOfPlayers()
-    {
-        return 4;
-        //return m_PlayersInGame.Count;
     }
 
     private void CalculatePlayersInGame()
@@ -92,6 +92,7 @@ public class GameManager : MonoBehaviour
     public void InitializeMatch(Match _match)
     {
         m_MatchData = _match;
+        CalculatePlayersInGame();
         LoadClientScene("Game_Scene");
     }
 
@@ -114,7 +115,7 @@ public class GameManager : MonoBehaviour
             float progress = Mathf.Clamp01(asyncOperation.progress / 0.9f);
             Debug.Log("Cargando escena: " + (progress * 100) + "%");
 
-            yield return null; // Esperamos un frame antes de continuar
+            yield return null; 
         }
         InitializePlayersHUD();
 
@@ -126,9 +127,49 @@ public class GameManager : MonoBehaviour
         for (int i = 0; i < m_MatchData.players.Length; i++)
         {
             PlayerGameInfo l_PlayerInfo = m_PlayersHolder.transform.GetChild(i).GetComponent<PlayerGameInfo>();
-            l_PlayerInfo.Initialize(m_MatchData.players[i].name, m_MatchData.players[i].ranking);
+            l_PlayerInfo.Initialize(m_MatchData.players[i].name, 7);
             l_PlayerInfo.gameObject.SetActive(true);
         }
         
+    }
+
+    public void UpdatePlayersCards(string _name, bool _add)
+    {
+        for (int i = 0; i < m_MatchData.players.Length; i++)
+        {
+            PlayerGameInfo l_PlayerInfo = m_PlayersHolder.transform.GetChild(i).GetComponent<PlayerGameInfo>();
+            if (l_PlayerInfo.GetName() == _name)
+            {
+                l_PlayerInfo.UpdateCards(_add);
+            }
+        }
+    }
+    
+    public void CheckIfMatchEnded()
+    {
+        for (int i = 0; i < m_MatchData.players.Length; i++)
+        {
+            PlayerGameInfo l_PlayerInfo = m_PlayersHolder.transform.GetChild(i).GetComponent<PlayerGameInfo>();
+            if (l_PlayerInfo.GetCards() == 0)
+            {
+              EndMatch(l_PlayerInfo.GetName());   
+            }
+        }
+    }
+
+    private void EndMatch(string winner)
+    {
+        Player l_Oponent = m_PlayersInGame.FirstOrDefault(player => player.name != m_SessionPlayer.name);
+        if (winner == m_SessionPlayer.name)
+        {
+            m_SessionPlayer.ranking = EloCalculator.ComputeEloRating(1, m_SessionPlayer.ranking, l_Oponent.ranking);
+        }
+        else
+        {
+            m_SessionPlayer.ranking = EloCalculator.ComputeEloRating(0, m_SessionPlayer.ranking, l_Oponent.ranking);
+        }
+        Debug.Log("NEW RANKING: " + m_SessionPlayer.ranking);
+        m_PlayersInGame.Clear();
+        SceneManager.LoadScene("Menu_Scene");
     }
 }
