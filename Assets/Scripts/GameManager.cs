@@ -11,7 +11,7 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager instance;
     private MenuManager m_MenuManager;
-    
+
     [Header("GameTable")] [SerializeField] private Transform m_PlayedCardsTransform;
     [SerializeField] private CardStash m_CardStash;
     private List<Player> m_PlayersInGame = new List<Player>();
@@ -19,30 +19,40 @@ public class GameManager : MonoBehaviour
     private Match m_MatchData;
 
     private GameObject m_PlayersHolder;
+
     private void Awake()
     {
         if (instance == null)
         {
+            PlayerPrefs.SetInt("SessionRanking", 1200);
+            PlayerPrefs.SetString("SessionName", "");
             instance = this;
         }
         else
         {
             Destroy(this);
         }
-        
+
+        DontDestroyOnLoad(this.gameObject);
+
         m_MenuManager = FindObjectOfType<MenuManager>();
-        if (m_SessionPlayer?.name != "default")
+
+        if (PlayerPrefs.GetString("SessionName") == "")
         {
-            InitializePlayerInformation(m_SessionPlayer.name, m_SessionPlayer.ranking);
-            return;
+            InitializePlayerInformation("default", 0000);
         }
-        InitializePlayerInformation("default", 0000);
     }
 
     private void Start()
     {
+        UpdateGameInfo();
+        SceneManager.sceneLoaded += (arg0, mode) => { UpdateGameInfo(); };
+    }
+
+    private void UpdateGameInfo()
+    {
         CalculatePlayersInGame();
-       
+        RefreshPlayerInformation();
     }
 
     private void CalculatePlayersInGame()
@@ -53,6 +63,7 @@ public class GameManager : MonoBehaviour
             AddPlayer(m_MatchData.players[i]);
         }
     }
+
     public void AddPlayer(Player _player)
     {
         m_PlayersInGame.Add(_player);
@@ -61,12 +72,21 @@ public class GameManager : MonoBehaviour
     public void InitializePlayerInformation(string _name, int _ranking)
     {
         m_SessionPlayer = new Player(_name, _ranking);
+        PlayerPrefs.SetString("SessionName", m_SessionPlayer.name);
+        PlayerPrefs.SetInt("SessionRanking", m_SessionPlayer.ranking);
         RefreshPlayerInformation();
     }
 
     public void RefreshPlayerInformation()
     {
-        m_MenuManager?.RefreshPlayerInformation(m_SessionPlayer);
+        if (m_MenuManager == null)
+        {
+            m_MenuManager = FindObjectOfType<MenuManager>();
+        }
+
+        string l_SessionName = PlayerPrefs.GetString("SessionName");
+        int l_Rank = PlayerPrefs.GetInt("SessionRanking");
+        m_MenuManager?.RefreshPlayerInformation(l_SessionName, l_Rank);
     }
 
     public Player GetPlayer()
@@ -105,7 +125,7 @@ public class GameManager : MonoBehaviour
     {
         StartCoroutine(LoadSceneAsyncCoroutine(_name));
     }
-    
+
     IEnumerator LoadSceneAsyncCoroutine(string _name)
     {
         AsyncOperation asyncOperation = SceneManager.LoadSceneAsync(_name);
@@ -115,10 +135,10 @@ public class GameManager : MonoBehaviour
             float progress = Mathf.Clamp01(asyncOperation.progress / 0.9f);
             Debug.Log("Cargando escena: " + (progress * 100) + "%");
 
-            yield return null; 
+            yield return null;
         }
-        InitializePlayersHUD();
 
+        InitializePlayersHUD();
     }
 
     private void InitializePlayersHUD()
@@ -130,7 +150,6 @@ public class GameManager : MonoBehaviour
             l_PlayerInfo.Initialize(m_MatchData.players[i].name, 7);
             l_PlayerInfo.gameObject.SetActive(true);
         }
-        
     }
 
     public void UpdatePlayersCards(string _name, bool _add)
@@ -143,8 +162,10 @@ public class GameManager : MonoBehaviour
                 l_PlayerInfo.UpdateCards(_add);
             }
         }
+
+        CheckIfMatchEnded();
     }
-    
+
     public void CheckIfMatchEnded()
     {
         for (int i = 0; i < m_MatchData.players.Length; i++)
@@ -152,7 +173,7 @@ public class GameManager : MonoBehaviour
             PlayerGameInfo l_PlayerInfo = m_PlayersHolder.transform.GetChild(i).GetComponent<PlayerGameInfo>();
             if (l_PlayerInfo.GetCards() == 0)
             {
-              EndMatch(l_PlayerInfo.GetName());   
+                EndMatch(l_PlayerInfo.GetName());
             }
         }
     }
@@ -168,6 +189,8 @@ public class GameManager : MonoBehaviour
         {
             m_SessionPlayer.ranking = EloCalculator.ComputeEloRating(0, m_SessionPlayer.ranking, l_Oponent.ranking);
         }
+
+        PlayerPrefs.SetInt("SessionRanking", m_SessionPlayer.ranking);
         Debug.Log("NEW RANKING: " + m_SessionPlayer.ranking);
         m_PlayersInGame.Clear();
         SceneManager.LoadScene("Menu_Scene");

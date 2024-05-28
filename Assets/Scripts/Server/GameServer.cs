@@ -39,6 +39,7 @@ public class GameServer : MonoBehaviour
     {
         if (m_CardSucces && m_LastCardInfo != null)
         {
+            Debug.Log("CARD PLAYED");
             CardDealer.instance.PlayCard(m_LastCardInfo);
             m_CardSucces = false;
         }
@@ -100,11 +101,9 @@ public class GameServer : MonoBehaviour
         }
         else
         {
-            Debug.Log("Nombre del jugador: " + e.Data);
             m_isMyTurn = true;
             m_UpdateCardsSubstract = true;
             m_LastPlayerName = e.Data;
-
         }
     }
 }

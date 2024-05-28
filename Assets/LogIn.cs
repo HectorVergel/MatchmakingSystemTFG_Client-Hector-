@@ -7,7 +7,7 @@ public class LogIn : MonoBehaviour
     [SerializeField] private GameObject m_Log;
     void Start()
     {
-        if (GameManager.instance.GetPlayer().name != "default")
+        if (PlayerPrefs.GetString("SessionName") != "default")
         {
             m_Log.gameObject.SetActive(false);
         }

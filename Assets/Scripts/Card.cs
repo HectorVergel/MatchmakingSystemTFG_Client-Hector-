@@ -43,8 +43,6 @@ public class Card : MonoBehaviour
             }
             GameManager.instance.UpdatePlayersCards(GameManager.instance.GetPlayer().name, false);
             GameServer.instance.SendCardPlayed(m_CardInfo);
-            
-            GameManager.instance.CheckIfMatchEnded();
         }
     }
 

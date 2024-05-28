@@ -24,7 +24,6 @@ public class PlayerGameInfo : MonoBehaviour
         if (_add)
         {
             m_CurrentCards++;
-            Debug.Log("IN");
         }
         else
         {
@@ -41,6 +40,6 @@ public class PlayerGameInfo : MonoBehaviour
 
     public int GetCards()
     {
-        return m_CurrentCards;
+        return int.Parse(m_CardsText.text);
     }
 }

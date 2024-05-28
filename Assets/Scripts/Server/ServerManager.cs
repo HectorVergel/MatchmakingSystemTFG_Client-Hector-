@@ -28,7 +28,7 @@ public class ServerManager : MonoBehaviour
         }
         else
         {
-            Destroy(m_instance);
+            Destroy(this);
         }
 
         DontDestroyOnLoad(this.gameObject);
