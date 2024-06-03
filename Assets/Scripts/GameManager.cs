@@ -6,6 +6,7 @@ using Mono.Cecil;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
@@ -14,6 +15,7 @@ public class GameManager : MonoBehaviour
 
     [Header("GameTable")] [SerializeField] private Transform m_PlayedCardsTransform;
     [SerializeField] private CardStash m_CardStash;
+    [SerializeField] private Image m_CurrentColor;
     private List<Player> m_PlayersInGame = new List<Player>();
     private Player m_SessionPlayer;
     private Match m_MatchData;
@@ -94,6 +96,11 @@ public class GameManager : MonoBehaviour
         return m_SessionPlayer;
     }
 
+    public Player GetOtherPlayer()
+    {
+
+        return m_PlayersInGame.FirstOrDefault(player => player.name != m_SessionPlayer.name);
+    }
     public MenuManager GetMenuManager()
     {
         return m_MenuManager;
@@ -162,7 +169,6 @@ public class GameManager : MonoBehaviour
                 l_PlayerInfo.UpdateCards(_add);
             }
         }
-
         CheckIfMatchEnded();
     }
 

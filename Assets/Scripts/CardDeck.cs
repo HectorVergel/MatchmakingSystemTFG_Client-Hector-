@@ -64,7 +64,7 @@ public class CardDeck : MonoBehaviour
             CARD_COLOR color;
             CardInfo l_CardInfo;
 
-            if (l_SplitName[0] == "SUM4" || l_SplitName[0] == "COLOR")
+            if (l_SplitName[0] == "SUM4" ||l_SplitName[0] == "COLOR")
             {
                 type = (CARD_TYPE)System.Enum.Parse(typeof(CARD_TYPE), l_SplitName[0]);
                 l_CardInfo = new CardInfo(type, CARD_COLOR.NONE);
@@ -78,6 +78,10 @@ public class CardDeck : MonoBehaviour
                 l_CardInfo = new CardInfo(type, color);
                 m_CardsInDeck.Add(l_CardInfo);
             }
+            // else if (l_SplitName[0] == "SUM2" || l_SplitName[0] == "SUM4")
+            // {
+            //     return;
+            // }
             else
             {
                 int number = int.Parse(l_SplitName[0]);

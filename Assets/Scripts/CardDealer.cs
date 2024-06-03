@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class CardDealer : MonoBehaviour
 {
@@ -17,10 +18,18 @@ public class CardDealer : MonoBehaviour
     [Header("References")] [SerializeField]
     private List<Transform> m_PlayersHandsTransforms = new List<Transform>();
     [SerializeField] private Transform m_PlayerHand;
-
+    [SerializeField] private Image m_CurrentColor;
     [SerializeField] private Transform m_PlayedCards;
 
     private Card m_LastCardPlayed;
+    
+    private static readonly Dictionary<CARD_COLOR, Color> m_CardColorMap = new Dictionary<CARD_COLOR, Color>
+    {
+        { CARD_COLOR.RED, Color.red },
+        { CARD_COLOR.BLUE, Color.blue },
+        { CARD_COLOR.GREEN, Color.green },
+        {CARD_COLOR.YELLOW, Color.yellow}
+    };
 
     private void Awake()
     {
@@ -90,10 +99,22 @@ public class CardDealer : MonoBehaviour
 
         }
         m_LastCardPlayed = _card;
+        m_CurrentColor.color = GetLastCardColor();
+        
     }
 
     public Card GetLastCardPlayed()
     {
         return m_LastCardPlayed;
+    }
+    
+    public Color GetLastCardColor()
+    {
+        if (m_CardColorMap.TryGetValue(m_LastCardPlayed.m_CardInfo.color, out Color color))
+        {
+            return color;
+        }
+        
+        return Color.white;
     }
 }

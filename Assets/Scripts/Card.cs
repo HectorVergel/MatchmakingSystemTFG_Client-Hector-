@@ -25,7 +25,6 @@ public class Card : MonoBehaviour
         {
             m_Image.sprite = m_CardInfo.sprite;
         }
-      
     }
 
     public void PlayCard()
@@ -37,27 +36,41 @@ public class Card : MonoBehaviour
             transform.SetParent(GameManager.instance.GetPlayCardTransform());
             StartCoroutine(MoveToPosition(Vector3.zero));
             CardDealer.instance.SetLastCardPlayed(this);
-            if (m_CardInfo.effect)
+            if (m_CardInfo.effect is Effect_ChooseColor)
             {
-                m_CardInfo.effect.DoEffect();
+                m_CardInfo.effect.DoEffect(m_CardInfo);
             }
+            else
+            {
+                GameServer.instance.SendCardPlayed(m_CardInfo);
+            }
+
             GameManager.instance.UpdatePlayersCards(GameManager.instance.GetPlayer().name, false);
-            GameServer.instance.SendCardPlayed(m_CardInfo);
         }
     }
 
     private bool CanPlayCardSelected()
     {
+        CardInfo l_LastCard = CardDealer.instance.GetLastCardPlayed().m_CardInfo;
         if (m_CardInfo.type == CARD_TYPE.SUM4 || m_CardInfo.type == CARD_TYPE.COLOR)
         {
             return true;
         }
 
-        if (m_CardInfo.color == CardDealer.instance.GetLastCardPlayed().m_CardInfo.color || m_CardInfo.number == CardDealer.instance.GetLastCardPlayed().m_CardInfo.number)
+        if (m_CardInfo.color == l_LastCard.color)
         {
             return true;
         }
 
+        if (m_CardInfo.type != CARD_TYPE.NUMBER && m_CardInfo.type == l_LastCard.type)
+        {
+            return true;
+        }
+
+        if (m_CardInfo.type == CARD_TYPE.NUMBER && m_CardInfo.number == l_LastCard.number)
+        {
+            return true;
+        }
         return false;
     }
 
@@ -71,7 +84,6 @@ public class Card : MonoBehaviour
             yield return null;
         }
     }
-    
 }
 
 public enum CARD_TYPE
